@@ -1,92 +1,88 @@
-options(conflicts.policy = list(warn = FALSE))
-shhh <- suppressPackageStartupMessages # It's a library, so shhh!
-shhh(library(av))
-shhh(library(bslib))
-shhh(library(cptcity))
-shhh(library(countrycode))
-shhh(library(deSolve))
-shhh(library(dplyr))
-shhh(library(DT))
-shhh(library(ggplot2))
-shhh(library(htmltools))
-shhh(library(latex2exp))
-shhh(library(lattice))
-shhh(library(latticeExtra))
-shhh(library(leaflet))
-shhh(library(maps))
-shhh(library(markdown))
-shhh(library(plotly))
-shhh(library(purrr))
-options("rgdal_show_exportToProj4_warnings"="none")
-shhh(library(rasterVis))
-shhh(library(readr))
-shhh(library(readxl))
-shhh(library(writexl))
-shhh(library(sf))     # classes and functions for vector data
-shhh(library(shiny))
-shhh(library(shinyalert))
-shhh(library(shinybusy))
-shhh(library(shinyhelper))
-shhh(library(shinyjs))
-shhh(library(shinyvalidate))
-shhh(library(shinyWidgets))
-shhh(library(sp))
-shhh(library(stringr))
-shhh(library(terra, warn.conflicts=FALSE))  # suppressWarnings(suppressMessages(library(terra)))
-shhh(library(tidyverse))
-shhh(library(tinytex))
+options(
+  conflicts.policy = list(warn = FALSE),
+  ## I can't find this option in the package vignette.
+  "rgdal_show_exportToProj4_warnings" = "none",
+  scipen = 999
+)
 
-source("R/cropBaseRasterHaxby.R")
-source("R/makePlots.R")
-source("R/plotOptionsMenu.R")
-source("R/rasterBasePlot.R")
-source("R/rasterCropSeedPlot.R")
-source("R/rasterCumulativePlot.R")
-source("R/rasterLeafletPlots.R")
-#source("R/rasterSimulation.R")
-source("R/rasterSimulation_DA.R")
-source("R/rasterStack.R")
-source("R/WorldPopPlots.R")
+packages <- c(
+  "av",           "bslib",       "cptcity",  "countrycode",
+  "deSolve",      "dplyr",       "DT",       "ggplot2",
+  "here",
+  "htmltools",    "latex2exp",   "lattice",  "latticeExtra",
+  "leaflet",      "maps",        "markdown", "plotly",
+  "purrr",        "rasterVis",   "readr",    "readxl",
+  "writexl",      "sf",          "shiny",    "shinyalert",
+  "shinybusy",    "shinyhelper", "shinyjs",  "shinyvalidate",
+  "shinyWidgets", "sp",          "stringr",  "terra",
+  "tidyverse",    "tinytex", "purrr"
+)
 
-options(scipen = 999)
+stopifnot(
+all(lapply(packages, \(package) {
+  suppressPackageStartupMessages(require(package,
+    quietly = TRUE,
+    warn.conflicts = FALSE,
+    character.only = TRUE
+  ))
+}))
+)
+
+here::i_am("global.R")
+
+## FIXME: these aren't Shiny modules; they're just R files and they're sourced
+## only to ensure they run in a particular order without depending on Shiny to
+## do that for us. Shiny will still run them all again, in whatever order it
+## runs them. TODO: rename these so they are loaded, automatically, by Shiny in
+## a particular order.
+modules <- c(
+  "cropBaseRasterHaxby", "makePlots", "plotOptionsMenu",
+  "rasterBasePlot", "rasterCropSeedPlot", "rasterCumulativePlot",
+  "rasterLeafletPlots", "rasterSimulation_DA", "rasterStack",
+  "WorldPopPlots"
+)
+lapply(modules, \(module) invisible(source(paste0("R/", module, ".R"))))
 
 population <- read_excel("misc/population.xlsx", 1)
 shortlist <- filter(population, shortList == "TRUE")
 epiparms <- read_excel("misc/epiparms.xlsx", 1)
 
-#List of countries that need "the" prepended to their name
-prependList <- c("Czech Republic", 
-                 "Democratic Republic of Congo",
-                 "Gambia",
-                 "Netherlands")
-#print(epiparms)
+## List of countries that need "the" prepended to their name
+prependList <- c(
+  "Czech Republic",
+  "Democratic Republic of Congo",
+  "Gambia",
+  "Netherlands"
+)
 
 fieldsMandatory <- c("selectedCountry", "seedData")
 
 valueRange <- c(0, 5, 10, 25, 50, 100, 250, 1000, 10000)
-ramp <- c('#FFFFFF', 
-          '#D0D8FB', 
-          '#BAC5F7', 
-          '#8FA1F1', 
-          '#617AEC', 
-          '#0027E0', 
-          '#1965F0', 
-          '#0C81F8', 
-          '#18AFFF', 
-          '#31BEFF', 
-          '#43CAFF', 
-          '#60E1F0', 
-          '#69EBE1', 
-          '#7BEBC8', 
-          '#8AECAE', 
-          '#ACF5A8', 
-          '#CDFFA2', 
-          '#DFF58D', 
-          '#F0EC78', 
-          '#F7D767', 
-          '#FFBD56', 
-          '#FFA044', 
-          '#EE4F4D')
+ramp <- c(
+  "#FFFFFF",
+  "#D0D8FB",
+  "#BAC5F7",
+  "#8FA1F1",
+  "#617AEC",
+  "#0027E0",
+  "#1965F0",
+  "#0C81F8",
+  "#18AFFF",
+  "#31BEFF",
+  "#43CAFF",
+  "#60E1F0",
+  "#69EBE1",
+  "#7BEBC8",
+  "#8AECAE",
+  "#ACF5A8",
+  "#CDFFA2",
+  "#DFF58D",
+  "#F0EC78",
+  "#F7D767",
+  "#FFBD56",
+  "#FFA044",
+  "#EE4F4D"
+)
 pal <- colorRampPalette(ramp)
 colorPalette <- colorBin(pal(9)[-1], domain = valueRange, bins = valueRange)
 
@@ -101,7 +97,7 @@ colorPalette <- colorBin(pal(9)[-1], domain = valueRange, bins = valueRange)
 
 highlightDrop <- function(menu) {
   tagList(
-    menu, 
+    menu,
     span(class = "dropDown")
   )
 }
@@ -112,17 +108,55 @@ highlightDrop <- function(menu) {
 openDataFile <- function(datafile) {
   ext <- tools::file_ext(datafile$name)
   ext <- tolower(ext)
-  
-  switch(ext, 
-         csv = read_csv(datafile$datapath, show_col_types = FALSE),
-         xls = read_xls(datafile$datapath),
-         xlsx = read_xlsx(datafile$datapath),
-         txt = read_tsv(datafile$datapath, show_col_types = FALSE),
-         
-         validate("Improper file format.")
+
+  switch(ext,
+    csv = read_csv(datafile$datapath, show_col_types = FALSE),
+    xls = read_xls(datafile$datapath),
+    xlsx = read_xlsx(datafile$datapath),
+    txt = read_tsv(datafile$datapath, show_col_types = FALSE),
+    validate("Improper file format.")
   )
 }
 
 appCSS <- ".mandatory_star {color: red;}"
 appCSS <- ".invisible {display:none;}"
 appCSS <- ".dropDown:hover {color:ADD8E6;background-color: #000000}"
+
+## Add all of the rules generated by rule function factories to a validator; do
+## not apply the functions if the list of inputs and rule vectors is empty
+## (ruleList has a length of zero), or if the vector of rules for a single input
+## has a length of zero.
+##
+## This has the side effect of enabling the validator.000000
+##
+## Returns the validator invisibly.
+addRuleListToValidator <- function(validator, ruleList) {
+  if (length(ruleList)) {
+    mapply(
+      function(inputId, ruleVector) {
+        validator$add_rule(inputId, sv_required())
+        if (length(ruleVector)) {
+          ## inputId is intentionally recycled ♺!
+          mapply(validator$add_rule, inputId, ruleVector)
+        }
+      },
+      names(ruleList),
+      ruleList
+    )
+  }
+
+  validator$enable()
+  invisible(validator)
+}
+
+updateNumericInputs <- function(defaults, session) {
+  if (any(is.null(dim(defaults)), dim(defaults)[1] != 1)) {
+    warning("The `defaults` dataframe is not a single row!")
+    print(defaults) # DONT remove this. It's intentional, not for development.
+  }
+  iwalk(defaults, \(value, inputId) {
+    updateNumericInput(session, inputId, value = value)
+  })
+}
+
+shinyAppDir(getwd())
